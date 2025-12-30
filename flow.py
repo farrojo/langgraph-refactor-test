@@ -34,14 +34,14 @@ first_responder = ResponderWithRetries(
 )
 
 # revision
-revise_instructions = """Revise your previous answer using the new information.
-    - You should use the previous critique to add important information to your answer.
-        - You MUST include numerical citations in your revised answer to ensure it can be verified.
-        - Add a "References" section to the bottom of your answer (which does not count towards the word limit). In form of:
-            - [1] https://example.com
-            - [2] https://example.com
-    - You should use the previous critique to remove superfluous information from your answer and make SURE it is not more than 250 words.
-    - Your output MUST include all required fields: 'answer', 'reflection', 'search_queries', and 'references', matching the function schema."""
+revise_instructions = """Revise your previous answer using the new information from the tool output.
+- Use the prior critique to add missing content and remove superfluous content.
+- Keep the revised answer <= 250 words.
+- You MUST include numerical citations like [1], [2] in the answer.
+- You MUST add a 'References' section at the end listing URLs.
+- IMPORTANT: You cannot browse the web. Only cite URLs provided by the tool output ('sources').
+- Do NOT invent recent statistics or policy outcomes. If unsure, speak generally and mark uncertainty briefly.
+- Your output MUST include all required fields: 'answer', 'reflection', 'search_queries', and 'references', matching the function schema."""
 
 # Extend the initial answer schema to include references.
 # Forcing citation in the model encourages grounded responses
