@@ -39,11 +39,18 @@ def _get_num_iterations(state: list):
 
 
 def event_loop(state: list):
-    # in our case, we'll just stop after N plans
-    num_iterations = _get_num_iterations(state["messages"])
+    messages = state["messages"]
+    last = messages[-1]
+
+    # if the reviser produced a final AI message it must stop
+    if getattr(last, "type", None) == "ai" and not getattr(last, "tool_calls", None):
+        return END
+
+    num_iterations = _get_num_iterations(messages)
     if num_iterations > MAX_ITERATIONS:
         return END
     return "execute_tools"
+
 
 
 # revise -> execute_tools OR end
