@@ -38,11 +38,33 @@ def _get_num_iterations(state: list):
     return i
 
 
+
+def _looks_done(messages) -> bool:
+    # find last ai tool call arguments -> ReviseAnswer / AnswerQuestion
+    for m in reversed(messages):
+        if getattr(m, "type", None) == "ai" and getattr(m, "tool_calls", None):
+            tc = m.tool_calls[0]
+            args = tc.get("args", {}) or {}
+            ans = (args.get("answer") or "").strip()
+            refs = args.get("references") or []
+            has_refs_section = "References" in ans
+            has_citations = "[" in ans and "]" in ans
+            short_enough = len(ans.split()) <= 260  #slight buffer
+            enough_refs = isinstance(refs, list) and len(refs) >= 2
+            #require mitigation + adaptation words to avoid drifting to just one side
+            balanced = ("mitigation" in ans.lower()) and ("adaptation" in ans.lower())
+            return short_enough and has_citations and has_refs_section and enough_refs and balanced
+    return False
+
+
 def event_loop(state: list):
     messages = state["messages"]
-    last = messages[-1]
 
-    # if the reviser produced a final AI message it must stop
+    # stop when answer meets criteria to prevents endless selfrevision drift
+    if _looks_done(messages):
+        return END
+
+    last = messages[-1]
     if getattr(last, "type", None) == "ai" and not getattr(last, "tool_calls", None):
         return END
 
@@ -50,8 +72,6 @@ def event_loop(state: list):
     if num_iterations > MAX_ITERATIONS:
         return END
     return "execute_tools"
-
-
 
 # revise -> execute_tools OR end
 builder.add_conditional_edges("revise", event_loop, ["execute_tools", END])
